@@ -4,7 +4,6 @@ import seaborn as sns
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score, davies_bouldin_score, calinski_harabasz_score
 
-
 def load_data():
     costumer_preprocessed = pd.read_csv("costumer_preprocessed_combined.csv")
     costumer_raw = pd.read_csv("customer_info.csv")
