@@ -34,7 +34,7 @@ plt.title("Hierarchical Clustering Dendrogram")
 #calling the dendrogram plot function
 plot_dendrogram(clustering, truncate_mode="level", p=3)
 
-plt.show()
+print(plt.show())
 
 #based on what we saw in the dendrogram plot we choose the number of clusters (4)
 final_model = AgglomerativeClustering(n_clusters=4)
