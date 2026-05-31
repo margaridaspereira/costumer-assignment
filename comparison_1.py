@@ -4,9 +4,10 @@ import seaborn as sns
 import umap
 from sklearn.metrics import silhouette_score, davies_bouldin_score, calinski_harabasz_score
 
-from kmeans_2 import load_data, run_kmeans
+from customer_utils import load_data, plot_cluster_sizes, plot_cluster_profile
+from kmeans_2 import  run_kmeans
 from meanshift import run_meanshift
-from clusters import run_hierarchical
+from hierarchical import run_hierarchical
 
 # Metrics
 
@@ -66,17 +67,13 @@ def plot_metrics(metrics_df):
     plt.show()
 
 
-def plot_cluster_sizes(labels_dict):
+def plot_cluster_sizes_comparison(labels_dict):
     n = len(labels_dict)
     fig, axes = plt.subplots(1, n, figsize=(6 * n, 4))
     colors = ["steelblue", "seagreen", "coral"]
 
     for ax, (name, labels), color in zip(axes, labels_dict.items(), colors):
-        sizes = pd.Series(labels).value_counts().sort_index()
-        ax.bar(sizes.index.astype(str), sizes.values, color=color, edgecolor="black")
-        ax.set_title(f"{name} — cluster sizes (k={len(set(labels))})")
-        ax.set_xlabel("Cluster")
-        ax.set_ylabel("Customers")
+        plot_cluster_sizes(labels, title=f"{name} — Cluster Sizes", color=color, ax=ax)
 
     plt.tight_layout()
     plt.show()
@@ -123,13 +120,21 @@ def print_verdict(metrics_df):
     best_db  = metrics_df["davies_bouldin"].idxmin()
     best_ch  = metrics_df["calinski_harabasz"].idxmax()
 
-    print(f"Best Silhouette        → {best_sil}")
-    print(f"Best Davies-Bouldin    → {best_db}")
-    print(f"Best Calinski-Harabasz → {best_ch}")
+    print(f"Best Silhouette        : {best_sil}")
+    print(f"Best Davies-Bouldin    : {best_db}")
+    print(f"Best Calinski-Harabasz : {best_ch}")
 
     votes  = pd.Series([best_sil, best_db, best_ch]).value_counts()
     winner = votes.idxmax()
-    print(f"\nRecommended algorithm  → {winner} ({votes[winner]}/3 metrics)")
+    print(f"\nRecommended algorithm  : {winner} ({votes[winner]}/3 metrics)")
+    return winner
+
+
+def export_clusters(costumer_featured, labels):
+    output = costumer_featured[["customer_id"]].copy()
+    output['cluster'] = labels
+    output.to_csv("cluster_assignments.csv", index=False)
+    print(f"Saved {len(output)} rows : cluster_assignments.csv")
 
 
 # ─────────────────────────────────────────────
@@ -139,22 +144,23 @@ def print_verdict(metrics_df):
 if __name__ == "__main__":
     KMEANS_K       = 6
     HIERARCHICAL_K = 4
+    MEANSHIFT_BW   = 2.17
 
-    costumer_preprocessed, costumer = load_data()
+    costumer_preprocessed, costumer_featured = load_data()
 
     # Fit UMAP once — shared projection for all models
     print("Computing shared UMAP projection...")
-    reducer = umap.UMAP(n_components=2, random_state=42)
+    reducer = umap.UMAP(n_components=2, random_state=16)
     embedding = reducer.fit_transform(costumer_preprocessed)
 
     print("\n── Fitting K-Means ──")
-    _, labels_kmeans, _ = run_kmeans(costumer_preprocessed, costumer, n_clusters=KMEANS_K, embedding=embedding)
+    _, labels_kmeans = run_kmeans(costumer_preprocessed, n_clusters=KMEANS_K)
 
     print("\n── Fitting Hierarchical (Ward) ──")
-    _, labels_ward, _ = run_hierarchical(costumer_preprocessed, costumer, n_clusters=HIERARCHICAL_K, embedding=embedding)
+    _, labels_ward = run_hierarchical(costumer_preprocessed, n_clusters=HIERARCHICAL_K)
 
     print("\n── Fitting Mean Shift ──")
-    _, labels_ms, _ = run_meanshift(costumer_preprocessed, costumer, embedding=embedding)
+    _, labels_ms = run_meanshift(costumer_preprocessed, bandwidth=MEANSHIFT_BW)
 
     labels_dict = {
         "K-Means"     : labels_kmeans,
@@ -168,8 +174,18 @@ if __name__ == "__main__":
     # All plots
     plot_umap_comparison(embedding, labels_dict)
     plot_metrics(metrics_df)
-    plot_cluster_sizes(labels_dict)
+    plot_cluster_sizes_comparison(labels_dict)
     plot_heatmaps(costumer_preprocessed, labels_dict)
-    plot_crosstab(labels_kmeans, labels_ward, "K-Means", "Hierarchical")
 
-    print_verdict(metrics_df)
+    # Cluster overlap
+    plot_crosstab(labels_kmeans, labels_ward, "K-Means", "Hierarchical")
+    plot_crosstab(labels_kmeans, labels_ms, "K-Means", "Mean Shift")
+    plot_crosstab(labels_ward, labels_ms, "Hierarchical", "Mean Shift")
+
+    winner = print_verdict(metrics_df)
+    final_labels = labels_dict[winner]
+
+    plot_cluster_profile(costumer_preprocessed, costumer_featured, final_labels)
+
+    # Export cluster assignments (from the recommended algorithm)
+    export_clusters(costumer_featured, final_labels)
