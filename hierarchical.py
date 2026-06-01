@@ -51,10 +51,10 @@ if __name__ == "__main__":
 
     # Dendrogram
     exploratory = fit_hierarchical(costumer_preprocessed)
-    plot_dendrogram(exploratory, truncate_mode="level", p=3)
+    plot_dendrogram(exploratory, truncate_mode="level", p=4)
 
     # Clustering
-    model, labels = run_hierarchical(costumer_preprocessed)
+    model, labels = run_hierarchical(costumer_preprocessed, n_clusters=5)
 
     # Analyze clusters
     plot_cluster_profile(costumer_preprocessed, costumer_featured, labels)
