@@ -44,6 +44,26 @@ def plot_umap_comparison(embedding, labels_dict):
     plt.show()
 
 
+def plot_pca_comparison(embedding, labels_dict):
+    """One PCA projection, one subplot per clustering solution."""
+    n = len(labels_dict)
+    fig, axes = plt.subplots(1, n, figsize=(7 * n, 6))
+
+    for ax, (name, labels) in zip(axes,labels_dict.items()):
+        scatter = ax.scatter(
+            embedding[:,0], embedding[:,1],
+            c=labels, cmap="tab10", s=10, alpha=0.7
+                            )
+        plt.colorbar(scatter, ax=ax, label="Cluster")
+        ax.set_title(f"PCA — {name} (k={len(set(labels))})")
+        ax.set_xlabel("PC 1")
+        ax.set_ylabel("PC 2")
+    fig.suptitle("PCA projection — clustering comparison", fontsize=14, y=1.02)
+    plt.tight_layout()
+    plt.show()
+
+
+
 def plot_metrics(metrics_df):
     fig, axes = plt.subplots(1, 3, figsize=(15, 5))
     colors = ["steelblue", "seagreen", "coral"]
@@ -153,6 +173,12 @@ if __name__ == "__main__":
     reducer = umap.UMAP(n_components=2, random_state=16)
     embedding = reducer.fit_transform(costumer_preprocessed)
 
+    # Fit PCA once — shared projection for all models
+    print("Computing shared PCA projection...")
+    pca = PCA(n_components=2)
+    pca_embedding = pca.fit_transform(costumer_preprocessed)
+    print(f"Variance explained: {pca.explained_variance_ratio_.sum():.2%}")
+
     print("\n── Fitting K-Means ──")
     _, labels_kmeans = run_kmeans(costumer_preprocessed, n_clusters=KMEANS_K)
 
@@ -173,6 +199,7 @@ if __name__ == "__main__":
 
     # All plots
     plot_umap_comparison(embedding, labels_dict)
+    plot_pca_comparison(pca_embedding, labels_dict)
     plot_metrics(metrics_df)
     plot_cluster_sizes_comparison(labels_dict)
     plot_heatmaps(costumer_preprocessed, labels_dict)
