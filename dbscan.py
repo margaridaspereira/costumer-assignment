@@ -5,7 +5,7 @@ from sklearn.cluster import DBSCAN
 from customer_utils import load_data, plot_cluster_sizes, plot_cluster_profile
 
 
-def eps_exploration(data, eps_values=[0.5, 0.75, 1.0, 1.25, 1.5], min_samples=5):
+def eps_exploration(data, eps_values=[1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 5.0], min_samples=5):
     for eps in eps_values:
         model = DBSCAN(eps=eps, min_samples=min_samples, n_jobs=-1)
         labels = model.fit_predict(data)
