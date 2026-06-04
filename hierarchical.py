@@ -54,7 +54,7 @@ if __name__ == "__main__":
     plot_dendrogram(exploratory, truncate_mode="level", p=4)
 
     # Clustering
-    model, labels = run_hierarchical(costumer_preprocessed, n_clusters=5)
+    model, labels = run_hierarchical(costumer_preprocessed, n_clusters=7)
 
     # Analyze clusters
     plot_cluster_profile(costumer_preprocessed, costumer_featured, labels)

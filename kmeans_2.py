@@ -80,8 +80,8 @@ if __name__ == "__main__":
     CHOSEN_K = 7
     costumer_preprocessed, costumer_featured = load_data()
 
-    #elbow_curve(costumer_preprocessed)
-    #silhouette_scores(costumer_preprocessed)
+    elbow_curve(costumer_preprocessed)
+    silhouette_scores(costumer_preprocessed)
     silhouette_plot(costumer_preprocessed, n_clusters=CHOSEN_K)
 
     model, labels =  run_kmeans(costumer_preprocessed, n_clusters=CHOSEN_K)
