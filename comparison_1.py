@@ -6,7 +6,7 @@ from sklearn.metrics import silhouette_score, davies_bouldin_score, calinski_har
 
 from customer_utils import load_data, plot_cluster_sizes, plot_cluster_profile
 from kmeans_2 import  run_kmeans
-from meanshift import run_meanshift
+from dbscan import run_dbscan
 from hierarchical import run_hierarchical
 
 # Metrics
@@ -164,7 +164,8 @@ def export_clusters(costumer_featured, labels):
 if __name__ == "__main__":
     KMEANS_K       = 7
     HIERARCHICAL_K = 7
-    MEANSHIFT_BW   = 2.17
+    DBSCAN_EPS     = 0.5
+    DBSCAN_MIN_SAMPLES  = 10
 
     costumer_preprocessed, costumer_featured = load_data()
 
@@ -184,14 +185,13 @@ if __name__ == "__main__":
 
     print("\n── Fitting Hierarchical (Ward) ──")
     _, labels_ward = run_hierarchical(costumer_preprocessed, n_clusters=HIERARCHICAL_K)
-
-    print("\n── Fitting Mean Shift ──")
-    _, labels_ms = run_meanshift(costumer_preprocessed, bandwidth=MEANSHIFT_BW)
+    print("\n── Fitting DBSCAN ──")
+    _, labels_dbscan = run_dbscan(costumer_preprocessed, eps=DBSCAN_EPS, min_samples=DBSCAN_MIN_SAMPLES)
 
     labels_dict = {
         "K-Means"     : labels_kmeans,
         "Hierarchical": labels_ward,
-        "Mean Shift"  : labels_ms,
+        "DBSCAN"      : labels_dbscan,
     }
 
     print("\n── Computing Metrics ──")
@@ -205,9 +205,9 @@ if __name__ == "__main__":
     plot_heatmaps(costumer_preprocessed, labels_dict)
 
     # Cluster overlap
-    plot_crosstab(labels_kmeans, labels_ward, "K-Means", "Hierarchical")
-    plot_crosstab(labels_kmeans, labels_ms, "K-Means", "Mean Shift")
-    plot_crosstab(labels_ward, labels_ms, "Hierarchical", "Mean Shift")
+    plot_crosstab(labels_kmeans, labels_ward,   "K-Means", "Hierarchical")
+    plot_crosstab(labels_kmeans, labels_dbscan, "K-Means", "DBSCAN")
+    plot_crosstab(labels_ward,   labels_dbscan, "Hierarchical", "DBSCAN")
 
     winner = print_verdict(metrics_df)
     final_labels = labels_dict[winner]
