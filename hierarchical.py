@@ -36,7 +36,7 @@ def fit_hierarchical(data):
     return model
 
 
-def run_hierarchical(data, n_clusters=4):
+def run_hierarchical(data, n_clusters=7):
 
     model = AgglomerativeClustering( n_clusters=n_clusters)
     labels = model.fit_predict(data)

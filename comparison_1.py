@@ -162,8 +162,8 @@ def export_clusters(costumer_featured, labels):
 # ─────────────────────────────────────────────
 
 if __name__ == "__main__":
-    KMEANS_K       = 5
-    HIERARCHICAL_K = 5
+    KMEANS_K       = 7
+    HIERARCHICAL_K = 7
     MEANSHIFT_BW   = 2.17
 
     costumer_preprocessed, costumer_featured = load_data()

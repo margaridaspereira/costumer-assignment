@@ -77,7 +77,7 @@ def run_kmeans(data, n_clusters=6):
 
 
 if __name__ == "__main__":
-    CHOSEN_K = 5
+    CHOSEN_K = 7
     costumer_preprocessed, costumer_featured = load_data()
 
     #elbow_curve(costumer_preprocessed)
