@@ -68,7 +68,7 @@ def silhouette_plot(data, n_clusters):
     plt.tight_layout()
     plt.show()
 
-def run_kmeans(data, n_clusters=6):
+def run_kmeans(data, n_clusters=7):
     
     model = KMeans(n_clusters=n_clusters, random_state=16, n_init="auto")
     labels = model.fit_predict(data)
