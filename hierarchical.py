@@ -3,7 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.cluster import AgglomerativeClustering
 from scipy.cluster.hierarchy import dendrogram
-
 from customer_utils import load_data, plot_cluster_sizes, plot_cluster_profile
 
 
@@ -38,7 +37,7 @@ def fit_hierarchical(data):
 
 def run_hierarchical(data, n_clusters=7):
 
-    model = AgglomerativeClustering( n_clusters=n_clusters)
+    model = AgglomerativeClustering( n_clusters=n_clusters, linkage="ward")
     labels = model.fit_predict(data)
 
     return model, labels

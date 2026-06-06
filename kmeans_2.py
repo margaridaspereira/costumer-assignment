@@ -8,7 +8,7 @@ from customer_utils import load_data, plot_cluster_sizes, plot_cluster_profile
 
 
 
-def elbow_curve(data, k_range=range(1, 20)):
+def elbow_curve(data, k_range=range(1, 20), chosen_k = None):
     inertia = [
         KMeans(n_clusters=k, random_state=16, n_init="auto").fit(data).inertia_
         for k in k_range
@@ -16,6 +16,10 @@ def elbow_curve(data, k_range=range(1, 20)):
 
     plt.figure(figsize=(8, 5))
     plt.plot(list(k_range), inertia, marker="o")
+    if chosen_k is not None:
+        plt.axvline(x=chosen_k, color="red", linestyle="--", label=f"Chosen k = {chosen_k}")
+        plt.scatter([chosen_k], [inertia[chosen_k - 1]], color="red", s=100, zorder=5) 
+        plt.legend()
     plt.xlabel("Number of clusters (k)")
     plt.ylabel("Inertia")
     plt.title("Elbow Method")
@@ -26,10 +30,10 @@ def elbow_curve(data, k_range=range(1, 20)):
 
 
 def silhouette_scores(data, k_range=range(2, 12)):
-    scores = {
-        k: silhouette_score(data, KMeans(n_clusters=k, random_state=16, n_init="auto").fit_predict(data))
-        for k in k_range
-    }
+    scores = {}
+    for k in k_range:
+        labels = KMeans(n_clusters=k, random_state=16, n_init="auto").fit_predict(data)
+        scores[k] = silhouette_score(data, labels)  # reutiliza labels, não treina duas vezes
 
     best_k = max(scores, key=lambda k: scores[k])
     print(f"Best k by silhouette: {best_k}  (score={scores[best_k]:.4f})")
@@ -80,7 +84,7 @@ if __name__ == "__main__":
     CHOSEN_K = 7
     costumer_preprocessed, costumer_featured = load_data()
 
-    elbow_curve(costumer_preprocessed)
+    elbow_curve(costumer_preprocessed, chosen_k=CHOSEN_K)
     silhouette_scores(costumer_preprocessed)
     silhouette_plot(costumer_preprocessed, n_clusters=CHOSEN_K)
 
@@ -88,4 +92,3 @@ if __name__ == "__main__":
 
     plot_cluster_profile(costumer_preprocessed, costumer_featured, labels)
     plot_cluster_sizes(labels, title=f"Cluster sizes — K-Means")
-    

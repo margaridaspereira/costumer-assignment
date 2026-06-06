@@ -4,7 +4,6 @@ import seaborn as sns
 import umap
 from sklearn.decomposition import PCA
 from sklearn.metrics import silhouette_score, davies_bouldin_score, calinski_harabasz_score
-
 from customer_utils import load_data, plot_cluster_sizes, plot_cluster_profile
 from kmeans_2 import  run_kmeans
 from dbscan import run_dbscan
@@ -151,11 +150,57 @@ def print_verdict(metrics_df):
     return winner
 
 
-def export_clusters(costumer_featured, labels):
-    output = costumer_featured[["customer_id"]].copy()
-    output['cluster'] = labels
-    output.to_csv("cluster_assignments.csv", index=False)
-    print(f"Saved {len(output)} rows : cluster_assignments.csv")
+def export_clusters(costumer_featured, labels, preprocessed):
+    from sklearn.cluster import KMeans
+    from sklearn.preprocessing import StandardScaler
+
+    # Clientes com cluster atribuído (os que passaram pelo pré-processamento)
+    assignments = costumer_featured[["customer_id"]].copy()
+    assignments["cluster"] = labels
+
+    # Clientes sem transações no basket — excluídos pelo inner join no pré-processamento
+    info = pd.read_csv("customer_info.csv")
+    missing_ids = set(info["customer_id"]) - set(assignments["customer_id"])
+    missing_df = info[info["customer_id"].isin(missing_ids)].copy()
+
+    # Replicar o mesmo feature engineering do EDA
+    current_year = 2024
+    missing_df["age"] = current_year - pd.to_datetime(
+        missing_df["customer_birthdate"], errors="coerce", format="mixed"
+    ).dt.year
+    missing_df["years_as_customer"] = current_year - missing_df["year_first_transaction"]
+    missing_df["has_loyalty_card"] = missing_df["loyalty_card_number"].notna().astype(int)
+    missing_df["total_transactions"] = 0
+    missing_df["customer_gender"] = (missing_df["customer_gender"] == "M").astype(float)
+
+    # Imputar NaNs com a mediana do preprocessed
+    feature_cols = list(preprocessed.columns)
+    missing_features = missing_df[feature_cols].copy()
+    for col in feature_cols:
+        if missing_features[col].isna().any():
+            missing_features[col] = missing_features[col].fillna(preprocessed[col].median())
+
+    # Escalar e prever cluster
+    scaler = StandardScaler()
+    scaler.fit(preprocessed)
+    missing_scaled = scaler.transform(missing_features)
+
+    kmeans = KMeans(n_clusters=len(set(labels)), random_state=16, n_init="auto")
+    kmeans.fit(preprocessed)
+    missing_labels = kmeans.predict(missing_scaled)
+
+    missing_out = pd.DataFrame({
+        "customer_id": missing_df["customer_id"].values,
+        "cluster"    : missing_labels,
+    })
+
+    final = (
+        pd.concat([assignments, missing_out], ignore_index=True)
+        .sort_values("customer_id")
+        .reset_index(drop=True)
+    )
+    final.to_csv("cluster_assignments.csv", index=False)
+    print(f"Saved {len(final)} rows → cluster_assignments.csv")
 
 
 # ─────────────────────────────────────────────
@@ -217,5 +262,5 @@ if __name__ == "__main__":
 
     plot_cluster_profile(costumer_preprocessed, costumer_featured, final_labels)
 
-    # Export cluster assignments (from the recommended algorithm)
-    export_clusters(costumer_featured, final_labels)
+    # Export cluster assignments (from the recommended algorithm) — inclui todos os 33k clientes
+    export_clusters(costumer_featured, final_labels, costumer_preprocessed)
