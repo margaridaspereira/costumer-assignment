@@ -20,73 +20,129 @@ st.set_page_config(
 
 # --- CUSTOM CSS (Warm Light Orange/Cream Theme with premium clean cards) ---
 st.markdown("""
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght=400;500;600;700&display=swap');
-        
-        /* Ultra-light warm orange/cream background */
-        .stApp {
-            background-color: #FFF9F2;
-        }
-        
-        html, body, [class*="css"] {
-            font-family: 'Inter', sans-serif;
-            color: #2C1A04; /* Dark charcoal/cocoa text */
-        }
-        
-        /* Premium Content Cards */
-        .content-card {
-            background-color: #FFFFFF;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(230, 81, 0, 0.04);
-            border: 1px solid #FFE0B2;
-            margin-bottom: 20px;
-        }
-        
-        /* Custom Metric Cards */
-        .metric-card {
-            background-color: #FFFFFF;
-            border-left: 5px solid #2E7D32; /* Fresh green left border */
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-            border-top: 1px solid #E0E0E0;
-            border-right: 1px solid #E0E0E0;
-            border-bottom: 1px solid #E0E0E0;
-            margin-bottom: 15px;
-        }
-        .metric-title {
-            color: #757575;
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 600;
-        }
-        .metric-value {
-            color: #1B5E20;
-            font-size: 28px;
-            font-weight: 700;
-            margin-top: 5px;
-        }
-        
-        /* Market Basket Coupon Style */
-        .coupon-box {
-            background-color: #FFF3E0;
-            border: 2px dashed #E65100;
-            padding: 22px;
-            border-radius: 10px;
-            margin-top: 15px;
-        }
-        .coupon-title {
-            color: #E65100;
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-    </style>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght=400;500;600;700&display=swap');
+    
+    .stApp {
+        background-color: #FFF3E0;
+    }
+    
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif;
+        color: #2C1A04;
+    }
+    
+    .content-card {
+        background-color: #FFFFFF;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(230, 81, 0, 0.08);
+        border: 1px solid #FFCC80;
+        margin-bottom: 20px;
+    }
+    
+    .metric-card {
+        background-color: #FFF8F0;
+        border-left: 5px solid #E65100;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(230, 81, 0, 0.06);
+        border-top: 1px solid #FFE0B2;
+        border-right: 1px solid #FFE0B2;
+        border-bottom: 1px solid #FFE0B2;
+        margin-bottom: 15px;
+    }
+    
+    .metric-title {
+        color: #757575;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 600;
+    }
+    
+    .metric-value {
+        color: #E65100;
+        font-size: 28px;
+        font-weight: 700;
+        margin-top: 5px;
+    }
+    
+    .coupon-box {
+        background-color: #FFF3E0;
+        border: 2px dashed #BF360C;
+        padding: 22px;
+        border-radius: 10px;
+        margin-top: 15px;
+    }
+    
+    .coupon-title {
+        color: #BF360C;
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    p, span, div, label {
+        color: #2C1A04 !important;
+    }
+
+    .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, h1, h2, h3 {
+        color: #F08040 !important;
+        font-weight: 700 !important;
+    }
+
+    [data-testid="stSidebar"] {
+        background-color: #F08040 !important;
+    }
+
+    [data-testid="stSidebar"] * {
+        color: #FFFFFF !important;
+    }
+
+    [data-testid="stHeader"] {
+        background-color: #FFF3E0 !important;
+    }
+            
+    /* Number input background */
+    div[data-testid="stNumberInput"] input {
+        background-color: #FFF3E0 !important;
+        color: #E65100 !important;
+        border: 1px solid #FFCC80 !important;
+        font-weight: 700 !important;
+    }
+
+    /* Select/radio options */
+    div[data-testid="stSelectbox"] select,
+    div[data-testid="stSelectbox"] div {
+        background-color: #FFF3E0 !important;
+        color: #E65100 !important;
+    }
+            
+    /* Dropdown options list */
+    div[data-baseweb="popover"] ul {
+        background-color: #FFF3E0 !important;
+    }
+
+    div[data-baseweb="popover"] li {
+        background-color: #FFF3E0 !important;
+        color: #E65100 !important;
+    }
+
+    div[data-baseweb="popover"] li:hover {
+        background-color: #FFCC80 !important;
+        color: #2C1A04 !important;
+    }
+
+    /* Selected option */
+    div[data-baseweb="select"] div {
+        background-color: #FFF3E0 !important;
+        color: #E65100 !important;
+    }
+</style>
 """, unsafe_allow_html=True)
 
 # Coherent Graphics and Palette Setup

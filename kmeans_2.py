@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score, silhouette_samples
 
-from customer_utils import load_data, plot_cluster_sizes, plot_cluster_profile
+from customer_utils import load_data, plot_cluster_sizes, plot_cluster_profile, fit_umap, plot_umap_clusters
 
 
 
@@ -84,11 +84,14 @@ if __name__ == "__main__":
     CHOSEN_K = 7
     costumer_preprocessed, costumer_featured = load_data()
 
+    _, embedding = fit_umap(costumer_preprocessed)
+
     elbow_curve(costumer_preprocessed, chosen_k=CHOSEN_K)
     silhouette_scores(costumer_preprocessed)
     silhouette_plot(costumer_preprocessed, n_clusters=CHOSEN_K)
 
     model, labels =  run_kmeans(costumer_preprocessed, n_clusters=CHOSEN_K)
 
+    plot_umap_clusters(embedding, labels, title="Cluster Sizes — K-Means")  
     plot_cluster_profile(costumer_preprocessed, costumer_featured, labels)
     plot_cluster_sizes(labels, title=f"Cluster sizes — K-Means")

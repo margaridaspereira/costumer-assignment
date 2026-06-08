@@ -8,7 +8,7 @@ from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 from customer_utils import load_data, plot_cluster_sizes, plot_cluster_profile
 from kmeans_2 import  run_kmeans
-from dbscan import run_dbscan
+from dbscan import run_dbscan,assign_noise
 from hierarchical import run_hierarchical
 
 
@@ -152,15 +152,20 @@ def print_verdict(metrics_df):
     print(f"\nRecommended algorithm  : {winner} ({votes[winner]}/3 metrics)")
     return winner
 
-
-
+def export_clusters(costumer_featured, labels):
+    assignments = costumer_featured[["customer_id"]].copy()
+    assignments["cluster"] = labels
+    assignments = assignments.sort_values("customer_id").reset_index(drop=True)
+    assignments.to_csv("cluster_assignments.csv", index=False)
+    print(f"Saved {len(assignments)} rows → cluster_assignments.csv")
+ 
 # Main
 
 
 if __name__ == "__main__":
     KMEANS_K            = 7
     HIERARCHICAL_K      = 7
-    DBSCAN_EPS          = 0.2
+    DBSCAN_EPS          = 0.3
     DBSCAN_MIN_SAMPLES  = 5
 
     costumer_preprocessed, costumer_featured = load_data()
@@ -168,7 +173,7 @@ if __name__ == "__main__":
     # Fit UMAP once — shared projection for all models (sem variáveis binárias)
     print("Computing shared UMAP projection...")
     reducer = umap.UMAP(n_components=2, random_state=16)
-    embedding = reducer.fit_transform(costumer_preprocessed.drop(columns='has_loyalty_card'))
+    embedding = reducer.fit_transform(costumer_preprocessed)
 
     # Fit PCA once — shared projection for all models
     print("Computing shared PCA projection...")
@@ -184,6 +189,7 @@ if __name__ == "__main__":
 
     print("\n── Fitting DBSCAN ──")
     _, labels_dbscan = run_dbscan(embedding, eps=DBSCAN_EPS, min_samples=DBSCAN_MIN_SAMPLES)
+    labels_dbscan = assign_noise(embedding, labels_dbscan)
 
     labels_dict = {
         "K-Means"     : labels_kmeans,
@@ -212,4 +218,4 @@ if __name__ == "__main__":
     plot_cluster_profile(costumer_preprocessed, costumer_featured, final_labels)
 
     # Export cluster assignments (from the recommended algorithm) — inclui todos os 33k clientes
-    export_clusters(costumer_featured, final_labels, costumer_preprocessed)
+    export_clusters(costumer_featured, final_labels)
