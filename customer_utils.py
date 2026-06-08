@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 
 def load_data():
-    costumer_preprocessed = pd.read_csv("costumer_preprocessed_combined.csv")
+    costumer_preprocessed = pd.read_csv("costumer_preprocessed.csv")
     costumer_featured = pd.read_csv("costumer_featured.csv")
 
     return costumer_preprocessed, costumer_featured

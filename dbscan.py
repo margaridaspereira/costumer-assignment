@@ -1,13 +1,12 @@
 from sklearn.cluster import DBSCAN
 import numpy as np
 import matplotlib.pyplot as plt
-from umap import UMAP
+import umap
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="umap")
 
 from customer_utils import load_data, plot_cluster_sizes, plot_cluster_profile
 
-COLS_TO_DROP = ['customer_gender', 'has_loyalty_card']  # DBSCAN doesn't handle binary vars well, so we drop them for the UMAP embedding used by DBSCAN
 
 def fit_umap(data, n_components=2, random_state=16):
     """Reduce dimensionality with UMAP before clustering."""
@@ -57,7 +56,7 @@ if __name__ == "__main__":
     
     costumer_preprocessed, costumer_featured = load_data()
 
-    data_for_umap = costumer_preprocessed.drop(columns=COLS_TO_DROP)
+    data_for_umap = costumer_preprocessed.drop('has_loyalty_card')  # DBSCAN doesn't handle binary vars well, so we drop it for the UMAP embedding used by DBSCAN
 
     _, embedding = fit_umap(data_for_umap)
 
