@@ -1,7 +1,7 @@
 from sklearn.cluster import DBSCAN
 import numpy as np
 import matplotlib.pyplot as plt
-import umap
+from umap import UMAP
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="umap")
 
@@ -51,12 +51,12 @@ def plot_umap_clusters(embedding, labels, title="DBSCAN clusters — UMAP projec
 
 
 if __name__ == "__main__":
-    CHOSEN_EPS         = 0.8
-    CHOSEN_MIN_SAMPLES = 10
+    CHOSEN_EPS         = 0.3
+    CHOSEN_MIN_SAMPLES = 5
     
     costumer_preprocessed, costumer_featured = load_data()
 
-    data_for_umap = costumer_preprocessed.drop('has_loyalty_card')  # DBSCAN doesn't handle binary vars well, so we drop it for the UMAP embedding used by DBSCAN
+    data_for_umap = costumer_preprocessed.drop(columns='has_loyalty_card')  # DBSCAN doesn't handle binary vars well, so we drop it for the UMAP embedding used by DBSCAN
 
     _, embedding = fit_umap(data_for_umap)
 
