@@ -14,6 +14,7 @@ pip install -r requirements.txt
 
 streamlit run app.py
 
+As this project is developed entirely using standard Python scripts (.py files) rather than Jupyter Notebooks (except for the EDA phase), the code must be executed locally to generate and view the analytical outputs.
 ## Project Structure
 - `app.py` — Main Streamlit application
 - `eda.ipynb` — Exploratory Data Analysis and Preprocessing notebook
