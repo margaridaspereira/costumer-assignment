@@ -10,6 +10,7 @@ from sklearn.decomposition import PCA
 import umap
 from mlxtend.preprocessing import TransactionEncoder
 from mlxtend.frequent_patterns import apriori, association_rules
+import streamlit.components.v1 as components
 
 
 
@@ -17,6 +18,7 @@ from mlxtend.frequent_patterns import apriori, association_rules
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Open+Sans:wght@400;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
 
     /* 1. FUNDO GLOBAL DE ALTA PRIORIDADE */
     .stApp, [data-testid="stAppViewContainer"], [data-testid="stMainViewContainer"], [data-testid="stHeader"] {
@@ -82,6 +84,7 @@ st.markdown("""
 
     /* 6. CUSTOM EXPANDER HEADER (Cluster Cards) */
     /* Make expander headers toasted light yellow with blue text */
+            
     div[data-testid="stExpander"] > button,
     div[data-testid="stExpander"] summary,
     details[role="group"] > summary,
@@ -128,15 +131,24 @@ st.markdown("""
         font-weight: 600 !important;
     }
     /* Prevent small preview text from overflowing into expander headers */
-    div[data-testid="stExpander"] > button > div > div:last-child,
-    div[data-testid="stExpander"] summary > div > div:last-child {
-        display: none !important;
+    div[data-testid="stExpander"] > button > div > div:last-child {
+        visibility: hidden !important;
+        max-height: 0 !important;
+        overflow: hidden !important;
     }
     div[data-testid="stExpander"] > button, div[data-testid="stExpander"] summary {
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
+        white-space: normal !important;
+        overflow: visible !important;
     }
+            
+    /* Esconde só o preview text (último div) */
+
+    /* Mantém título e seta visíveis */
+    div[data-testid="stExpander"] summary {
+        white-space: normal !important;
+        overflow: visible !important;
+    }
+            
     div[data-baseweb="popover"] ul {
     background-color: #FFFFFF !important;
     }
@@ -150,9 +162,107 @@ st.markdown("""
         background-color: #FFCC80 !important;
         color: #2C1A04 !important;
     }
-        [data-testid="stExpander"] summary span:first-child {
-        display: none;
+    div[data-testid="stExpander"] summary [data-testid="stIconMaterial"] {
+        font-size: 0 !important;
+        width: 1.2rem !important;
+        height: 1.2rem !important;
     }
+
+    div[data-testid="stExpander"] summary [data-testid="stIconMaterial"]::before {
+        content: "▸" !important;
+        font-size: 1.2rem !important;
+        color: #293379 !important;
+    }
+
+    details[open] summary [data-testid="stIconMaterial"]::before {
+        content: "▾" !important;
+    }
+            
+    div[data-testid="stExpander"] summary p {
+        color: #293379 !important;
+        font-size: 1rem !important;
+        display: block !important;
+        visibility: visible !important;
+    }
+            
+    [data-testid="stSidebarCollapseButton"] button,
+    [data-testid="collapsedControl"] button {
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        overflow: hidden !important;
+        width: 2rem !important;
+        height: 2rem !important;
+    }
+
+    [data-testid="stSidebarCollapseButton"] button * ,
+    [data-testid="collapsedControl"] button * {
+        display: none !important;
+    }
+
+    [data-testid="stSidebarCollapseButton"] button::after {
+        content: "☰" !important;
+        font-size: 1.2rem !important;
+        color: #FFFFFF !important;
+        display: block !important;
+    }
+
+    [data-testid="collapsedControl"] button::after {
+        content: "☰" !important;
+        font-size: 1.2rem !important;
+        color: #293379 !important;
+        display: block !important;
+    }
+            
+
+    [data-testid="stExpandSidebarButton"] {
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        width: 2rem !important;
+        height: 2rem !important;
+    }
+
+    [data-testid="stExpandSidebarButton"] * {
+        display: none !important;
+    }
+
+    [data-testid="stExpandSidebarButton"]::after {
+        content: "☰" !important;
+        font-size: 1.2rem !important;
+        color: #293379 !important;
+        display: block !important;
+    }
+            
+    .st-emotion-cache-5r6ut5 {
+        display: none !important;
+    }
+            
+    [data-testid="stSidebar"] [data-testid="stImageContainer"] button,
+    [data-testid="stSidebar"] [data-testid="StyledFullScreenButton"],
+    [data-testid="stSidebar"] button[title="View fullscreen"] {
+        display: none !important;
+        visibility: hidden !important;
+    }
+            
+    button[data-testid="stBaseButton-elementToolbar"][aria-label="Fullscreen"] {
+        display: none !important;
+    }
+            
+    section[data-testid="stSidebar"] * {
+        font-size: 0.9rem !important;
+    }
+    section[data-testid="stSidebar"] h1 {
+        font-size: 1.2rem !important;
+    }
+            
+
+    div[data-testid="stTabs"] button[aria-selected="true"] span,
+    div[data-testid="stTabs"] button[aria-selected="true"] p {
+        color: #ee7302 !important;
+        font-size: 1.05rem !important;
+    }
+            
     </style>
     """, 
     unsafe_allow_html=True
@@ -284,8 +394,14 @@ def build_cluster_rules(basket, customer_info, labels):
     results = {}
     for cluster_id in sorted(customer_clusters["cluster_id"].unique()):
         cluster_transactions = merged.loc[merged["cluster_id"] == cluster_id, "items"].tolist()
-        support = 0.02 if len(cluster_transactions) < 6000 else 0.01
-        results[cluster_id] = build_rules(cluster_transactions, min_support=support, min_confidence=0.25, top_n=5)
+        n = len(cluster_transactions)
+        if n >= 6000:
+            support = 0.008
+        elif n >= 3000:
+            support = 0.012
+        else:
+            support = 0.02
+        results[cluster_id] = build_rules(cluster_transactions, min_support=support, min_confidence=0.2, top_n=5)
     return results
 
 
@@ -763,7 +879,7 @@ def main():
         )
 
     elif section == "Customer Profiles (Clustering)":
-        st.title("👥 Customer Profiles (Clustering)")
+        st.title("Customer Profiles (Clustering)")
         
         # --- EXECUÇÃO E CARREGAMENTO REAL DA VOSSA INFRAESTRUTURA ---
         import kmeans_2 as km
@@ -782,9 +898,9 @@ def main():
 
         # Criação das Abas em Inglês
         tab_kmeans, tab_dbscan, tab_comparison = st.tabs([
-            "🍊 K-Means Engine", 
-            "🍅 DBSCAN Density Model", 
-            "🔄 Algorithmic Comparison"
+            "K-Means Engine", 
+            "DBSCAN Density Model", 
+            "Algorithmic Comparison"
         ])
 
         # --- GESTOR DE FLUXO DO MATPLOTLIB ---
@@ -846,7 +962,7 @@ def main():
             comp.plot_umap_comparison(embedding, labels_dict)
 
             # Tabela de Validação Limpa por Silhouette Score
-            st.markdown("### 🏆 Selection Metric: Silhouette Score Analysis")
+            st.markdown("### Selection Metric: Silhouette Score Analysis")
             metrics_df = comp.compute_metrics(costumer_preprocessed, labels_dict)
             
             if "silhouette" in metrics_df.columns:
@@ -859,7 +975,7 @@ def main():
             # Estrutura de Quadrados Laranja Claro para os Tópicos de Negócio do Vosso Relatório
             st.markdown("<div class='orange-card'>", unsafe_allow_html=True)
             st.markdown("""
-            <h3>🎯 Selection Rationale (K-Means vs. DBSCAN)</h3>
+            <h3>Selection Rationale (K-Means vs. DBSCAN)</h3>
             While density-based algorithms were tested on the UMAP-reduced coordinates (utilizing Nearest Neighbors to reassign outliers), 
             <b>K-Means with k=7</b> was selected as the champion production model. This choice ensures 100% customer database coverage 
             (preventing any customer from being dropped as noise), yielding optimal structural partitions validated by Inertia (Elbow Method) 
@@ -869,7 +985,7 @@ def main():
 
             st.markdown("<div class='orange-card'>", unsafe_allow_html=True)
             st.markdown("""
-            <h3>⛓️ Association Rules Integration</h3>
+            <h3>Association Rules Integration</h3>
             The 7 behavioral profiles discovered in the high-dimensional feature space were directly mapped against historical transaction records 
             (<i>customer_basket</i>). This allowed the Apriori algorithm to extract customized antecedent-consequent rules per cohort, maximizing cross-selling returns.
             """, unsafe_allow_html=True)
@@ -877,14 +993,205 @@ def main():
 
             st.markdown("<div class='orange-card'>", unsafe_allow_html=True)
             st.markdown("""
-            <h3>🛡️ Margin Protection Matrix</h3>
+            <h3>Margin Protection Matrix</h3>
             Clearly isolating price-sensitive profiles (<i>Promo Surfers</i>) from high-value shoppers focused on premium assortment and convenience 
             (<i>Power Shoppers</i>) mitigates <b>discount leakage</b>, preventing the redundant distribution of profit-eating vouchers.
             """, unsafe_allow_html=True)
             st.markdown("</div>", unsafe_allow_html=True)
 
         # Restaura o sistema original do Matplotlib
-        plt.show = old_show    # --- SECTION 6: STRATEGIC RECOMMENDATIONS (Bloco Else) ---
+        plt.show = old_show  
+
+
+    elif section == "Campaigns & Promotions":
+        st.title("Campaigns & Promotions")
+
+        tab_coupons, tab_analysis = st.tabs([
+            "Targeted Coupons",
+            "Spending Analysis & Association Rules"
+        ])
+
+        CLUSTER_NAMES = {
+            0: "💻 Cluster 0 — Tech Enthusiasts",
+            1: "🌱 Cluster 1 — Plant-Based Lifestyle",
+            2: "👨‍👩‍👧‍👦 Cluster 2 — Large Households",
+            3: "🛡️ Cluster 3 — Brand Loyalists",
+            4: "⚠️ Cluster 4 — At-Risk Youth",
+            5: "💎 Cluster 5 — Power Shoppers",
+            6: "🎟️ Cluster 6 — Promo Surfers",
+        }
+
+        PROMOTIONS = {
+            0: {
+                "title": "🍫 Chocolate, Energy Drink or Protein Bar",
+                "description": "By buying AirPods.",
+                "mechanic": "Electronics purchase unlocks a complimentary food item at checkout.",
+                "discount": "FREE SNACK",
+                "color": "#293379",
+            },
+            1: {
+                "title": "🍳 Kitchen Essentials (Napkins & Cooking Oil)",
+                "description": "By buying Dog Food + Baby Food.",
+                "mechanic": "Bundle trigger — both items must be in the basket to activate.",
+                "discount": "10% OFF",
+                "color": "#2E7D32",
+            },
+            2: {
+                "title": "🥣 Breakfast Bundle Deal",
+                "description": "Buy Cereals + Tea + Butter together and save 15% on the full bundle.",
+                "mechanic": "All 3 items must be scanned together to unlock the bundle price.",
+                "discount": "15% OFF",
+                "color": "#b81817",
+            },
+            3: {
+                "title": "🏋️ Any Tech Item",
+                "description": "Buy any sports nutrition product",
+                "mechanic": "Nutrition purchase unlocks a tech discount voucher printed at checkout.",
+                "discount": "5% OFF",
+                "color": "#293379",
+            },
+            4: {
+                "title": "🥦 Progressive Veggie Discount",
+                "description": "The more vegetables you buy, the more you save: 2 items → 5% off, 4 items → 10% off, 6+ items → 15% off.",
+                "mechanic": "Progressive discount — scales automatically with basket quantity.",
+                "discount": "UP TO 15% OFF",
+                "color": "#2E7D32",
+            },
+            5: {
+                "title": "🎧 AirPods",
+                "description": "By buying any Electronic item.",
+                "mechanic": "Electronics purchase unlocks AirPods discount at checkout.",
+                "discount": "20% OFF",
+                "color": "#b81817",
+            },
+            6: {
+                "title": "🎵 Bluetooth Headphones",
+                "description": "By buying AirPods + Laptop.",
+                "mechanic": "Basket-gated — both AirPods and Laptop must be in the basket to unlock the deal.",
+                "discount": "30% OFF",
+                "color": "#ee7302",
+            },
+        }
+
+        with tab_coupons:
+            st.markdown("### Select a Cluster to View its Promotion")
+            
+            selected_cluster = st.selectbox(
+                "Choose a customer segment:",
+                options=list(CLUSTER_NAMES.keys()),
+                format_func=lambda x: CLUSTER_NAMES[x],
+                key="campaign_cluster_select"
+            )
+
+            promo = PROMOTIONS[selected_cluster]
+            color = promo['color']
+            discount = promo['discount']
+            title = promo['title']
+            description = promo['description']
+            mechanic = promo['mechanic']
+            cluster_name = CLUSTER_NAMES[selected_cluster]
+
+
+            components.html(f"""
+            <style>
+                body {{ background-color: #FFFBF7; margin: 0; padding: 0; }}
+            </style>
+            <div style="
+                display: flex;
+                max-width: 900px;
+                width: 100%;
+                margin-top: 20px;
+                filter: drop-shadow(0 4px 16px rgba(0,0,0,0.15));
+                background-color: #FFFBF7;
+            ">
+                <!-- MAIN COUPON BODY -->
+                <div style="
+                    background-color: {color};
+                    padding: 36px 40px;
+                    flex: 1;
+                    border-radius: 12px 0 0 12px;
+                ">
+                    <p style="color: rgba(255,255,255,0.8); font-family: Montserrat; font-size: 0.85rem; letter-spacing: 3px; text-transform: uppercase; margin: 0 0 8px 0;">{cluster_name}</p>
+                    <h1 style="color: #FFFFFF; font-family: Montserrat; font-size: 3rem; font-weight: 900; margin: 0 0 8px 0; line-height: 1;">{discount}</h1>
+                    <h3 style="color: rgba(255,255,255,0.9); font-family: Montserrat; font-size: 1.2rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin: 0 0 20px 0;">{title}</h3>
+                    <p style="color: rgba(255,255,255,0.85); font-size: 1rem; margin: 0 0 12px 0;">{description}</p>
+                    <p style="color: rgba(255,255,255,0.65); font-size: 0.85rem; margin: 0;"><b style="color:rgba(255,255,255,0.85);">How it works:</b> {mechanic}</p>
+                </div>
+
+                <!-- NOTCH SEPARATOR -->
+                <div style="
+                    width: 24px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    position: relative;
+                    background-color: {color};
+                    filter: brightness(0.85);
+                    flex-shrink: 0;
+                ">
+                    <div style="width: 20px; height: 20px; border-radius: 50%; background-color: #FFFBF7; position: absolute; top: -10px; left: 2px; z-index: 10; filter: brightness(1);"></div>
+                    <div style="width: 2px; height: 100%; border-left: 3px dashed rgba(255,255,255,0.4);"></div>
+                    <div style="width: 20px; height: 20px; border-radius: 50%; background-color: #FFFBF7; position: absolute; bottom: -10px; left: 2px; z-index: 10; filter: brightness(1);"></div>
+                </div>
+
+                <!-- TEAR-OFF STUB -->
+                <div style="
+                    background-color: {color};
+                    filter: brightness(0.75);
+                    width: 80px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 0 12px 12px 0;
+                    flex-shrink: 0;
+                ">
+                    <p style="color: #FFFFFF; font-family: Montserrat; font-weight: 800; font-size: 0.75rem; letter-spacing: 3px; text-transform: uppercase; writing-mode: vertical-rl; transform: rotate(180deg); margin: 0;">COUPON · {discount}</p>
+                </div>
+            </div>
+            """, height=300)
+
+        with tab_analysis:
+            st.markdown("### Spending Analysis & Association Rules")
+
+            selected_cluster_analysis = st.selectbox(
+                "Choose a customer segment:",
+                options=list(CLUSTER_NAMES.keys()),
+                format_func=lambda x: CLUSTER_NAMES[x],
+                key="analysis_cluster_select"
+            )
+
+            col_annual, col_rules = st.columns(2)
+
+            with col_annual:
+                st.markdown("#### Annual Spend by Category")
+                spend_cols = [c for c in featured.columns if c.startswith("lifetime_spend_")]
+                cluster_mask = labels == selected_cluster_analysis
+                cluster_featured = featured[cluster_mask].copy()
+
+                if "years_as_customer" in cluster_featured.columns and len(cluster_featured) > 0:
+                    annual_data = {}
+                    for col in spend_cols:
+                        category = col.replace("lifetime_spend_", "").replace("_", " ").title()
+                        avg_annual = (cluster_featured[col] / cluster_featured["years_as_customer"].replace(0, 1)).mean()
+                        annual_data[category] = round(avg_annual, 2)
+
+                    annual_df = pd.DataFrame.from_dict(annual_data, orient="index", columns=["Avg Annual Spend (€)"])
+                    annual_df = annual_df.sort_values("Avg Annual Spend (€)", ascending=False)
+                    st.dataframe(annual_df, use_container_width=True)
+                else:
+                    st.info("Annual spend data not available.")
+
+            with col_rules:
+                st.markdown("#### Top Association Rules")
+                cluster_rules = rules_by_cluster.get(selected_cluster_analysis, pd.DataFrame())
+                if not cluster_rules.empty:
+                    st.dataframe(
+                        cluster_rules[["antecedent", "consequent", "support", "confidence", "lift"]].round(3),
+                        use_container_width=True
+                    )
+                else:
+                    st.info("No association rules found for this cluster.")
     # ─────────────────────────────────────────────────────────────
     # SECTION: STRATEGIC RECOMMENDATIONS & CONCLUSION
     # Replace the existing `else:` block in main() with this block
@@ -901,6 +1208,11 @@ def main():
             color: #FFFFFF !important;
         }
         .rec-hero h2 { color: #FFFFFF !important; font-size: 1.7rem !important; margin-bottom: 6px !important; }
+        .rec-hero h2, .rec-hero h2 * {
+                                        color: #FFFFFF !important;
+                                        opacity: 1 !important;
+                                        visibility: visible !important;
+                                    }
         .rec-hero p  { color: #FFD9B5 !important; font-size: 1.05rem !important; margin: 0 !important; }
 
         .priority-card {
@@ -968,7 +1280,7 @@ def main():
         # ── HERO BANNER ──────────────────────────────────────────
         st.markdown("""
         <div class="rec-hero">
-            <h2>📋 Conclusion & Strategic Recommendations</h2>
+            <h2>Conclusion & Strategic Recommendations</h2>
             <p>Turning seven behavioral personas into a concrete retail playbook — margin-safe, 
             cluster-aware, and ready for immediate activation.</p>
         </div>
@@ -976,8 +1288,8 @@ def main():
 
         # ── TAB LAYOUT ────────────────────────────────────────────
         tab_simulator, tab_conclusion = st.tabs([
-            "📊 Revenue Lift Simulator",
-            "✅ Final Conclusions",
+            "Revenue Lift Simulator",
+            "Final Conclusions",
         ])
 
         
@@ -1049,7 +1361,6 @@ def main():
             st.markdown("#### Campaign-Level Impact Breakdown")
             st.caption("Estimated contribution per cluster campaign — adjust share assumptions as needed.")
 
-            import pandas as pd  # already imported at top-level; safe to call here
             breakdown_data = {
                 "Cluster": [
                     "💎 Power Shoppers", "🛡️ Brand Loyalists", "🌱 Plant-Based",
@@ -1081,7 +1392,7 @@ def main():
 
             st.markdown("""
             <div class="conclusion-block">
-                <h3>🔬 Technical Takeaways</h3>
+                <h3>Technical Takeaways</h3>
                 <ul>
                     <li><b>K-Means (k=7) outperformed DBSCAN</b> as the production model: it guarantees 
                     100% customer coverage, produces stable centroids across retraining cycles, and 
@@ -1106,7 +1417,7 @@ def main():
             with col_l:
                 st.markdown("""
                 <div class="conclusion-block">
-                    <h3>💡 Business Recommendations</h3>
+                    <h3>Business Recommendations</h3>
                     <ul>
                         <li><b>Stop issuing generic store-wide vouchers.</b> At least 23% of your 
                         customer base (Power Shoppers + Brand Loyalists) is completely 
@@ -1127,7 +1438,7 @@ def main():
             with col_r:
                 st.markdown("""
                 <div class="conclusion-block">
-                    <h3>🗓️ 90-Day Activation Roadmap</h3>
+                    <h3>90-Day Activation Roadmap</h3>
                     <ul>
                         <li><b>Month 1 — Quick wins:</b> Deploy the Conditional Coupon Gate 
                         for Cluster 6 at POS. Configure dormancy alert pipeline for 
@@ -1147,7 +1458,7 @@ def main():
 
             st.markdown("---")
             st.caption(
-                "📌 Academic Delivery Note: All modeling code, training notebooks, and .py "
+                "Academic Delivery Note: All modeling code, training notebooks, and .py "
                 "source files are version-controlled in the project repository. "
                 "This application layer contains zero raw code in compliance with project guidelines."
             )
